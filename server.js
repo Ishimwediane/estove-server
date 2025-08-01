@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import connectDB from './config/db.js';
 
 dotenv.config({ path: './env.config' });
 
@@ -13,9 +14,9 @@ app.use(cors({
   origin: [
     "http://localhost:5173", 
     "http://localhost:3000",
-    "https://estove-web.vercel.app",
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+    "https://estove-web.vercel.app", // Your Vercel frontend
+    process.env.FRONTEND_URL // Allow environment variable for frontend URL
+  ].filter(Boolean), // Remove undefined values
   methods: "GET,POST,PUT,DELETE",
   allowedHeaders: "Content-Type,Authorization,Origin",
   credentials: true,
@@ -24,17 +25,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/estove', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-  console.log('✅ Connected to MongoDB');
-});
+// Connect to MongoDB
+connectDB();
 
 // Stove Data Schema
 const stoveDataSchema = new mongoose.Schema({
@@ -158,14 +150,14 @@ app.post('/api/start-cooking', async (req, res) => {
 
     // Create a new stove data entry to indicate cooking started
     const newData = new StoveData({
-      temperature: 0,
+      temperature: 0, // Will be updated by ESP32
       relay: true,
       manualMode: false,
       cooking: true,
       timeLeft: seconds
     });
-    await newData.save();
 
+    await newData.save();
     console.log('🍳 Cooking started:', { seconds, foodType, weight });
 
     res.status(200).json({ 
@@ -191,14 +183,14 @@ app.post('/api/stop-cooking', async (req, res) => {
 
     // Create a new stove data entry to indicate cooking stopped
     const newData = new StoveData({
-      temperature: 0,
+      temperature: 0, // Will be updated by ESP32
       relay: false,
       manualMode: false,
       cooking: false,
       timeLeft: 0
     });
-    await newData.save();
 
+    await newData.save();
     console.log('⏹️ Cooking stopped - Relay OFF, Cooking OFF');
 
     res.status(200).json({ 
@@ -224,16 +216,16 @@ app.post('/api/toggle-manual', async (req, res) => {
     });
     await newCommand.save();
 
-    // Create a new stove data entry
+    // Create a new stove data entry to indicate manual mode change
     const newData = new StoveData({
-      temperature: 0,
-      relay: manualMode,
+      temperature: 0, // Will be updated by ESP32
+      relay: manualMode, // Relay on if manual mode, off if not
       manualMode: manualMode,
-      cooking: manualMode,
-      timeLeft: 0
+      cooking: manualMode, // Cooking is true if manual mode is on
+      timeLeft: 0 // Manual mode doesn't use timer
     });
-    await newData.save();
 
+    await newData.save();
     console.log('🔌 Manual mode toggled:', manualMode);
 
     res.status(200).json({ 
@@ -294,4 +286,4 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on ${serverUrl}`);
   console.log(`📡 ESP32 can send data to: ${serverUrl}/api/stove-data`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-}); 
+});
