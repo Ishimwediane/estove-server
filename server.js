@@ -122,6 +122,105 @@ app.get('/api/stove-data/range', async (req, res) => {
   }
 });
 
+// POST - Start cooking (send command to ESP32)
+app.post('/api/start-cooking', async (req, res) => {
+  try {
+    const { seconds, foodType, weight } = req.body;
+    
+    if (!seconds || seconds <= 0) {
+      return res.status(400).json({ error: 'Invalid cooking time' });
+    }
+
+    // Create a new stove data entry to indicate cooking started
+    const newData = new StoveData({
+      temperature: 0, // Will be updated by ESP32
+      relay: true,
+      manualMode: false,
+      cooking: true,
+      timeLeft: seconds
+    });
+
+    await newData.save();
+    console.log('🍳 Cooking started:', { seconds, foodType, weight });
+
+    // TODO: Send command to ESP32 to start cooking
+    // This would typically involve sending a request to your ESP32
+    // For now, we'll simulate the ESP32 response
+    const esp32Response = `Started cooking for ${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+
+    res.status(200).json({ 
+      message: 'Cooking started successfully', 
+      data: newData,
+      esp32Response: esp32Response
+    });
+  } catch (error) {
+    console.error('❌ Error starting cooking:', error);
+    res.status(500).json({ error: 'Failed to start cooking' });
+  }
+});
+
+// POST - Stop cooking (send command to ESP32)
+app.post('/api/stop-cooking', async (req, res) => {
+  try {
+    // Create a new stove data entry to indicate cooking stopped
+    const newData = new StoveData({
+      temperature: 0, // Will be updated by ESP32
+      relay: false,
+      manualMode: false,
+      cooking: false,
+      timeLeft: 0
+    });
+
+    await newData.save();
+    console.log('⏹️ Cooking stopped');
+
+    // TODO: Send command to ESP32 to stop cooking
+    // This would typically involve sending a request to your ESP32
+    // For now, we'll simulate the ESP32 response
+    const esp32Response = 'Cooking stopped successfully';
+
+    res.status(200).json({ 
+      message: 'Cooking stopped successfully', 
+      data: newData,
+      esp32Response: esp32Response
+    });
+  } catch (error) {
+    console.error('❌ Error stopping cooking:', error);
+    res.status(500).json({ error: 'Failed to stop cooking' });
+  }
+});
+
+// POST - Toggle manual mode
+app.post('/api/toggle-manual', async (req, res) => {
+  try {
+    const { manualMode } = req.body;
+    
+    // Create a new stove data entry to indicate manual mode change
+    const newData = new StoveData({
+      temperature: 0, // Will be updated by ESP32
+      relay: manualMode, // Relay on if manual mode, off if not
+      manualMode: manualMode,
+      cooking: manualMode, // Cooking is true if manual mode is on
+      timeLeft: 0 // Manual mode doesn't use timer
+    });
+
+    await newData.save();
+    console.log('🔌 Manual mode toggled:', manualMode);
+
+    // TODO: Send command to ESP32 to toggle manual mode
+    const esp32Response = manualMode ? 'Manual mode activated' : 'Manual mode deactivated';
+
+    res.status(200).json({ 
+      message: 'Manual mode toggled successfully', 
+      data: newData,
+      esp32Response: esp32Response
+    });
+  } catch (error) {
+    console.error('❌ Error toggling manual mode:', error);
+    res.status(500).json({ error: 'Failed to toggle manual mode' });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date() });
