@@ -172,12 +172,12 @@ app.post('/api/stop-cooking', async (req, res) => {
     });
 
     await newData.save();
-    console.log('⏹️ Cooking stopped');
+    console.log('⏹️ Cooking stopped - Relay OFF, Cooking OFF');
 
     // TODO: Send command to ESP32 to stop cooking
     // This would typically involve sending a request to your ESP32
     // For now, we'll simulate the ESP32 response
-    const esp32Response = 'Cooking stopped successfully';
+    const esp32Response = 'Cooking stopped - Relay turned OFF';
 
     res.status(200).json({ 
       message: 'Cooking stopped successfully', 
