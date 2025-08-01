@@ -11,7 +11,12 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:3000"],
+  origin: [
+    "http://localhost:5173", 
+    "http://localhost:3000",
+    "https://estove-web.vercel.app", // Your Vercel frontend
+    process.env.FRONTEND_URL // Allow environment variable for frontend URL
+  ].filter(Boolean), // Remove undefined values
   methods: "GET,POST,PUT,DELETE",
   allowedHeaders: "Content-Type,Authorization,Origin",
   credentials: true,
@@ -136,4 +141,4 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on ${serverUrl}`);
   console.log(`📡 ESP32 can send data to: ${serverUrl}/api/stove-data`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-}); 
+});

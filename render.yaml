@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: estove-server
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_USER
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: FRONTEND_URL
+        sync: false 
